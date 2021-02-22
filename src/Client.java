@@ -1,16 +1,22 @@
+import javax.swing.*;
 import java.net.*;
 import java.io.*;
+import javax.swing.*;
 
-public class Client implements Runnable
+public class Client
 {
     // initialize socket and input output streams
     private Socket socket		 = null;
     private DataInputStream input = null;
     private DataOutputStream out	 = null;
 
-    @Override
-    public void run() {
-
+    public class OptionPane {
+        JFrame f;
+        OptionPane(String notification){
+            f=new JFrame();
+            f.setVisible(true);
+            JOptionPane.showMessageDialog(f,notification);
+        }
     }
 
     // constructor to put ip address and port
@@ -39,9 +45,9 @@ public class Client implements Runnable
 
         // string to read message from input
         String line = "";
-
+        Boolean endConnection = false;
         // keep reading until "Over" is input
-        while (!line.equals("Over"))
+        while (!endConnection)
         {
             try
             {
@@ -57,6 +63,9 @@ public class Client implements Runnable
                     message = message.substring(1);
                     System.out.println(message);
                 }
+                else if(message.charAt(0) == '$'){
+                    new OptionPane(message.substring(1));
+                }
                 else {
                     System.out.println(message);
                     line = input.readLine();
@@ -66,7 +75,7 @@ public class Client implements Runnable
             }
             catch(IOException i)
             {
-                System.out.println(i);
+                endConnection = true;
             }
         }
 

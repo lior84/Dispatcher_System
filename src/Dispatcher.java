@@ -27,9 +27,9 @@ public class Dispatcher
                     new BufferedInputStream(socket.getInputStream()));
 
             String line = "";
-
+            Boolean endConnection = false;
             // reads message from client until "Over" is sent 
-            while (!line.equals("Over"))
+            while (!endConnection)
             {
                 try
                 {
@@ -53,15 +53,14 @@ public class Dispatcher
                         }
                         else if(intAns==4){
                             deleteMessageFromTheDispatcher(dataOutputStream, in);
-                            System.out.println("");
                         }
                         else if(intAns==5){
-
+                            addUserToInformedList(dataOutputStream, in);
                         }
-                        else if(intAns==6){
-
+                        else if(intAns == 6){
+                            endConnection = true;
                         }
-                        else{
+                        else {
                             dataOutputStream.writeUTF("#Wrong input, please try again: \n");
                             dataOutputStream.flush();
                         }
@@ -77,6 +76,34 @@ public class Dispatcher
             // close connection 
             socket.close();
             in.close();
+        }
+        catch(IOException i)
+        {
+            System.out.println(i);
+        }
+    }
+
+    private void addUserToInformedList(DataOutputStream dataOutputStream, DataInputStream in) {
+        try {
+            int senderId =  checkId(dataOutputStream, in);
+            if(DataManager.getInstance().hasBeenPulled(senderId)){
+                dataOutputStream.writeUTF( "$" + DataManager.getInstance().getNotificationStr(senderId));
+                dataOutputStream.flush();
+            }
+
+            dataOutputStream.writeUTF("Enter your message ID: ");
+            dataOutputStream.flush();
+            int messageId = Integer.parseInt(in.readUTF());
+            if(DataManager.getInstance().isInDispatcher(senderId, messageId)){
+                DataManager.getInstance().addSenderToInformedList(messageId, senderId);
+                dataOutputStream.writeUTF( "#When the message with the ID: " + messageId + " will be pulled" +
+                        " from the dispatcher, you will be informed!\n");
+                dataOutputStream.flush();
+            }
+            else {
+                dataOutputStream.writeUTF( "#The message is not in the dispatcher!\n");
+                dataOutputStream.flush();
+            }
         }
         catch(IOException i)
         {
@@ -149,7 +176,11 @@ public class Dispatcher
 
     public void addMessageIntoDispatcher(DataOutputStream dataOutputStream, DataInputStream in){
         try {
-            int id = checkId(dataOutputStream, in);
+            int senderId = checkId(dataOutputStream, in);
+            if(DataManager.getInstance().hasBeenPulled(senderId)){
+                dataOutputStream.writeUTF( "$" + DataManager.getInstance().getNotificationStr(senderId));
+                dataOutputStream.flush();
+            }
 
             //get subject
             String subject = getSubject(dataOutputStream, in);
@@ -164,7 +195,7 @@ public class Dispatcher
             HashMap<String, String> parameters = getParameters(dataOutputStream, in);
 
             //compose and insert message into the Data Manager
-            Message composedMessage = new Message(subject, description, parameters, id, receiverId);
+            Message composedMessage = new Message(subject, description, parameters, senderId, receiverId);
             DataManager manager = DataManager.getInstance();
             manager.addMessage(composedMessage);
         }
@@ -188,6 +219,10 @@ public class Dispatcher
         try {
             //get receiver ID, check if the user is authenticated
             int receiverId = checkId(dataOutputStream, in);
+            if(DataManager.getInstance().hasBeenPulled(receiverId)){
+                dataOutputStream.writeUTF( "$" + DataManager.getInstance().getNotificationStr(receiverId));
+                dataOutputStream.flush();
+            }
 
             int intPullAns;
             do {
@@ -198,7 +233,7 @@ public class Dispatcher
 
                 Vector<Message> messages = new Vector<>();
                 if (intPullAns == 1) {
-                    messages = DataManager.getAllMessages(receiverId);
+                    messages = DataManager.getInstance().getAllMessages(receiverId);
                     String messagesStr = "#";
                     if (messages != null) {
                         for (Message msg : messages) {
@@ -216,7 +251,7 @@ public class Dispatcher
                     dataOutputStream.flush();
                     int messageId = Integer.parseInt(in.readUTF());
 
-                    messages = DataManager.getMessagesByMessageId(receiverId, messageId);
+                    messages = DataManager.getInstance().getMessagesByMessageId(receiverId, messageId);
                     //send all the messages
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
@@ -226,7 +261,7 @@ public class Dispatcher
                     dataOutputStream.flush();
                     int senderId = Integer.parseInt(in.readUTF());
 
-                    messages = DataManager.getMessagesBySenderId(receiverId, senderId);
+                    messages = DataManager.getInstance().getMessagesBySenderId(receiverId, senderId);
                     //send all the messages
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
@@ -236,7 +271,7 @@ public class Dispatcher
                     dataOutputStream.flush();
                     String subject = new String(in.readUTF());
 
-                    messages = DataManager.getMessagesBySubject(receiverId, subject);
+                    messages = DataManager.getInstance().getMessagesBySubject(receiverId, subject);
                     //send all the messages
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
@@ -256,11 +291,15 @@ public class Dispatcher
     private void checkIfMessageInTheDispatcher(DataOutputStream dataOutputStream, DataInputStream in){
         try {
             int senderId =  checkId(dataOutputStream, in);
+            if(DataManager.getInstance().hasBeenPulled(senderId)){
+                dataOutputStream.writeUTF( "$" + DataManager.getInstance().getNotificationStr(senderId));
+                dataOutputStream.flush();
+            }
 
             dataOutputStream.writeUTF("Enter your message ID: ");
             dataOutputStream.flush();
             int messageId = Integer.parseInt(in.readUTF());
-            if(DataManager.isInDispatcher(senderId, messageId)){
+            if(DataManager.getInstance().isInDispatcher(senderId, messageId)){
                 dataOutputStream.writeUTF( "#The message is still in the dispatcher!\n");
                 dataOutputStream.flush();
             }
@@ -278,11 +317,15 @@ public class Dispatcher
     private void deleteMessageFromTheDispatcher(DataOutputStream dataOutputStream, DataInputStream in){
         try {
             int senderId = checkId(dataOutputStream, in);
+            if(DataManager.getInstance().hasBeenPulled(senderId)){
+                dataOutputStream.writeUTF( "$" + DataManager.getInstance().getNotificationStr(senderId));
+                dataOutputStream.flush();
+            }
 
             dataOutputStream.writeUTF("Enter your message ID: ");
             dataOutputStream.flush();
             int messageId = Integer.parseInt(in.readUTF());
-            if(DataManager.removeMessage(senderId, messageId)){
+            if(DataManager.getInstance().removeMessage(senderId, messageId)){
                 dataOutputStream.writeUTF( "#The message has been deleted!\n");
                 dataOutputStream.flush();
             }
@@ -336,6 +379,7 @@ public class Dispatcher
         manager.messageIdAndMessage.put(3, new Message("d", "d", parameters, 111, 888));
         manager.messageIdAndMessage.put(4, new Message("e", "e", parameters, 111, 888));
         manager.messageIdAndMessage.put(5, new Message("f", "f", parameters, 111, 888));
+
         Dispatcher server = new Dispatcher(5000);
     }
 }
