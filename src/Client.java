@@ -66,6 +66,10 @@ public class Client
                 else if(message.charAt(0) == '$'){
                     new OptionPane(message.substring(1));
                 }
+                else if(message.equals("over"))
+                {
+                    endConnection = true;
+                }
                 else {
                     System.out.println(message);
                     line = input.readLine();
@@ -85,6 +89,8 @@ public class Client
             input.close();
             out.close();
             socket.close();
+            System.out.println("The connection has been closed!");
+            System.exit(0);
         }
         catch(IOException i)
         {

@@ -59,6 +59,8 @@ public class Dispatcher
                         }
                         else if(intAns == 6){
                             endConnection = true;
+                            dataOutputStream.writeUTF("over");
+                            dataOutputStream.flush();
                         }
                         else {
                             dataOutputStream.writeUTF("#Wrong input, please try again: \n");
