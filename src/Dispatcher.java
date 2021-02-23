@@ -369,15 +369,16 @@ public class Dispatcher
 
     public static void main(String args[])
     {
-        HashMap<String, String> parameters = new HashMap<>();
-        parameters.put("a","b");
-        DataManager manager = DataManager.getInstance() ;
-        manager.messageIdAndMessage.put(0, new Message("a", "a", parameters, 111, 999));
-        manager.messageIdAndMessage.put(1, new Message("b", "b", parameters, 222, 999));
-        manager.messageIdAndMessage.put(2, new Message("c", "c", parameters, 333, 999));
-        manager.messageIdAndMessage.put(3, new Message("d", "d", parameters, 111, 888));
-        manager.messageIdAndMessage.put(4, new Message("e", "e", parameters, 111, 888));
-        manager.messageIdAndMessage.put(5, new Message("f", "f", parameters, 111, 888));
+        //Tests:
+//        HashMap<String, String> parameters = new HashMap<>();
+//        parameters.put("a","b");
+//        DataManager manager = DataManager.getInstance() ;
+//        manager.addMessage(new Message("a", "a", parameters, 111, 999));
+//        manager.addMessage(new Message("b", "b", parameters, 222, 999));
+//        manager.addMessage(new Message("c", "c", parameters, 333, 999));
+//        manager.addMessage(new Message("d", "d", parameters, 111, 888));
+//        manager.addMessage(new Message("e", "e", parameters, 111, 888));
+//        manager.addMessage(new Message("f", "f", parameters, 111, 888));
 
         Dispatcher server = new Dispatcher(5000);
     }

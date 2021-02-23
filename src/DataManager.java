@@ -10,11 +10,12 @@ class DataManager
     private static DataManager single_instance = null;
 
     public HashMap<Integer, Message> messageIdAndMessage = new HashMap<>();
+    public HashMap<Integer,  Set<Integer>> receiverIdAndMessagesId = new HashMap<>();
     private HashMap<Integer, Integer> MessageIdAndSenderId = new HashMap<>();
     private HashMap<Integer, Vector<Integer>> pulledSenderIdAndMessagesId = new HashMap<>();
 
     // private constructor restricted to this class itself
-    private DataManager(){messageIdAndMessage = new HashMap<Integer, Message>();}
+    private DataManager(){}
 
     // static method to create instance of Singleton class
     public static DataManager getInstance()
@@ -46,9 +47,16 @@ class DataManager
     private void deleteAllElements(Vector<Integer> recordsToDelete){
         for(int k : recordsToDelete){
             addToWaitingForNotificationList(k);
+            receiverIdAndMessagesId.get(messageIdAndMessage.get(k).getReceiverId()).remove(k);
+            if(receiverIdAndMessagesId.get(messageIdAndMessage.get(k).getReceiverId()).isEmpty())
+                receiverIdAndMessagesId.remove(messageIdAndMessage.get(k).getReceiverId());
             messageIdAndMessage.remove(k);
         }
     }
+
+//    private void addToReceiverAndMessageId(){
+//
+//    }
 
     public void addSenderToInformedList(int messageId, int senderId){
         MessageIdAndSenderId.put(messageId, senderId);
@@ -57,10 +65,11 @@ class DataManager
     public Vector<Message> getAllMessages(int receiverId) {
         Vector<Message> messages = new Vector<>();
         Vector<Integer> recordsToDelete = new Vector<>();
-        for (Map.Entry<Integer, Message> v : messageIdAndMessage.entrySet()) {
-            if(v.getValue().getReceiverId() == receiverId){
-                messages.add(v.getValue());
-                recordsToDelete.add(v.getKey());
+
+        if(receiverIdAndMessagesId.containsKey(receiverId)){
+            for(int messageId : receiverIdAndMessagesId.get(receiverId)){
+                messages.add(messageIdAndMessage.get(messageId));
+                recordsToDelete.add(messageId);
             }
         }
 
@@ -113,6 +122,9 @@ class DataManager
                 pulledSenderIdAndMessagesId.put(MessageIdAndSenderId.get(messageId), new Vector<>(messageId));
                 MessageIdAndSenderId.remove(messageId);
             }
+            receiverIdAndMessagesId.get(messageIdAndMessage.get(messageId).getReceiverId()).remove(messageId);
+            if(receiverIdAndMessagesId.get(messageIdAndMessage.get(messageId).getReceiverId()).isEmpty())
+                receiverIdAndMessagesId.remove(messageIdAndMessage.get(messageId).getReceiverId());
             messageIdAndMessage.remove(messageId);
         }
 
@@ -123,6 +135,9 @@ class DataManager
 
     public Boolean removeMessage(int senderId, int messageId) {
         if(this.isInDispatcher(senderId, messageId)){
+            receiverIdAndMessagesId.get(messageIdAndMessage.get(messageId).getReceiverId()).remove(messageId);
+            if(receiverIdAndMessagesId.get(messageIdAndMessage.get(messageId).getReceiverId()).isEmpty())
+                receiverIdAndMessagesId.remove(messageIdAndMessage.get(messageId).getReceiverId());
             messageIdAndMessage.remove(messageId);
             return true;
         }
@@ -131,6 +146,15 @@ class DataManager
 
     public void addMessage(Message message){
         messageIdAndMessage.put(message.getMessageId(), message);
+        int receiverId = message.getReceiverId();
+        if(receiverIdAndMessagesId.containsKey(receiverId)){
+            receiverIdAndMessagesId.get(receiverId).add(message.getMessageId());
+        }
+        else{
+            Set<Integer> tempSet = new HashSet<Integer>();
+            tempSet.add(message.getMessageId());
+            receiverIdAndMessagesId.put(receiverId, tempSet);
+        }
     }
 
     public Boolean isInDispatcher(int senderId, int messageId){
