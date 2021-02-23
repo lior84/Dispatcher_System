@@ -10,6 +10,7 @@ public class Client
     private DataInputStream input = null;
     private DataOutputStream out	 = null;
 
+    //Notification pop-up
     public class OptionPane {
         JFrame f;
         OptionPane(String notification){
@@ -46,7 +47,7 @@ public class Client
         // string to read message from input
         String line = "";
         Boolean endConnection = false;
-        // keep reading until "Over" is input
+        // keep reading until endConnection is true
         while (!endConnection)
         {
             try
@@ -59,10 +60,12 @@ public class Client
                 String message = "";
                 message = dataInputStream.readUTF();
 
+                //A message which starts with '#' character doesn't require an answer from the client
                 if(message.charAt(0) == '#') {
                     message = message.substring(1);
                     System.out.println(message);
                 }
+                //A message which starts with '$' character is a notification request and it doesn't require an answer from the client
                 else if(message.charAt(0) == '$'){
                     new OptionPane(message.substring(1));
                 }
@@ -70,12 +73,12 @@ public class Client
                 {
                     endConnection = true;
                 }
+                //Print the message and get an answer from the user to be sent to the dispatcher
                 else {
                     System.out.println(message);
                     line = input.readLine();
                     out.writeUTF(line);
                 }
-
             }
             catch(IOException i)
             {

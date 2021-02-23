@@ -16,6 +16,14 @@ class DataManager
     // private constructor restricted to this class itself
     private DataManager(){messageIdAndMessage = new HashMap<Integer, Message>();}
 
+    // static method to create instance of Singleton class
+    public static DataManager getInstance()
+    {
+        if (single_instance == null)
+            single_instance = new DataManager();
+
+        return single_instance;
+    }
 
     public Boolean hasBeenPulled(int senderId){
         return pulledSenderIdAndMessagesId.containsKey(senderId);
@@ -46,11 +54,11 @@ class DataManager
         MessageIdAndSenderId.put(messageId, senderId);
     }
 
-    public Vector<Message> getAllMessages(int id) {
+    public Vector<Message> getAllMessages(int receiverId) {
         Vector<Message> messages = new Vector<>();
         Vector<Integer> recordsToDelete = new Vector<>();
         for (Map.Entry<Integer, Message> v : messageIdAndMessage.entrySet()) {
-            if(v.getValue().getReceiverId() == id){
+            if(v.getValue().getReceiverId() == receiverId){
                 messages.add(v.getValue());
                 recordsToDelete.add(v.getKey());
             }
@@ -122,20 +130,11 @@ class DataManager
     }
 
     public void addMessage(Message message){
-        messageIdAndMessage.put(message.getMessageId(), new Message(message));
+        messageIdAndMessage.put(message.getMessageId(), message);
     }
 
     public Boolean isInDispatcher(int senderId, int messageId){
         return (messageIdAndMessage.containsKey(messageId) && messageIdAndMessage.get(messageId).getSenderId() == senderId);
-    }
-
-    // static method to create instance of Singleton class
-    public static DataManager getInstance()
-    {
-        if (single_instance == null)
-            single_instance = new DataManager();
-
-        return single_instance;
     }
 
     public String getNotificationStr(int senderId) {
@@ -146,6 +145,4 @@ class DataManager
         pulledSenderIdAndMessagesId.remove(senderId);
         return notificationMessage.substring(0, notificationMessage.length()-2);
     }
-
-
 }

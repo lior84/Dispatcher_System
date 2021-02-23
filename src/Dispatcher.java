@@ -5,17 +5,16 @@ import java.util.Vector;
 
 public class Dispatcher
 {
-    private Socket          socket   = null;
-    private ServerSocket    server   = null;
-    private DataInputStream in       =  null;
+    private Socket socket = null;
+    private ServerSocket server = null;
+    private DataInputStream in = null;
 
     public Dispatcher(int port)
     {
-       // manager = new DataManager();
         try
         {
             server = new ServerSocket(port);
-            System.out.println("Server started");
+                System.out.println("Dispatcher server started");
 
             System.out.println("Waiting for a client ...");
 
@@ -23,12 +22,11 @@ public class Dispatcher
             System.out.println("Client accepted");
 
             // takes input from the client socket 
-            in = new DataInputStream(
-                    new BufferedInputStream(socket.getInputStream()));
+            in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 
             String line = "";
             Boolean endConnection = false;
-            // reads message from client until "Over" is sent 
+            // keep reading until endConnection is true
             while (!endConnection)
             {
                 try
@@ -36,8 +34,8 @@ public class Dispatcher
                     do {
                         OutputStream outputStream = socket.getOutputStream();
                         DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                        dataOutputStream.writeUTF(getDisplayMain());
-                        dataOutputStream.flush(); // send the message
+                        dataOutputStream.writeUTF(getDisplayMain());//Send the main page to the client
+                        dataOutputStream.flush();
 
                         line = in.readUTF();
                         int intAns = Integer.parseInt(line);
@@ -48,16 +46,16 @@ public class Dispatcher
                         else if(intAns==2){//pull a message from the dispatcher
                             pullMessageFromDispatcher(dataOutputStream, in);
                         }
-                        else if(intAns==3){
+                        else if(intAns==3){//check if a message is in the dispatcher
                             checkIfMessageInTheDispatcher(dataOutputStream, in);
                         }
-                        else if(intAns==4){
+                        else if(intAns==4){//delete message from the dispatcher
                             deleteMessageFromTheDispatcher(dataOutputStream, in);
                         }
-                        else if(intAns==5){
+                        else if(intAns==5){//notify the user when a specific message which he composed has been pulled from the dispatcher
                             addUserToInformedList(dataOutputStream, in);
                         }
-                        else if(intAns == 6){
+                        else if(intAns == 6){//end the session
                             endConnection = true;
                             dataOutputStream.writeUTF("over");
                             dataOutputStream.flush();
@@ -85,6 +83,7 @@ public class Dispatcher
         }
     }
 
+    //Add a user into the notification list, so when a specific message he composed is pulled he will be notified
     private void addUserToInformedList(DataOutputStream dataOutputStream, DataInputStream in) {
         try {
             int senderId =  checkId(dataOutputStream, in);
@@ -96,6 +95,7 @@ public class Dispatcher
             dataOutputStream.writeUTF("Enter your message ID: ");
             dataOutputStream.flush();
             int messageId = Integer.parseInt(in.readUTF());
+
             if(DataManager.getInstance().isInDispatcher(senderId, messageId)){
                 DataManager.getInstance().addSenderToInformedList(messageId, senderId);
                 dataOutputStream.writeUTF( "#When the message with the ID: " + messageId + " will be pulled" +
@@ -113,6 +113,7 @@ public class Dispatcher
         }
     }
 
+    //Get an ID from the user and check if it id legal ID
     private int checkId(DataOutputStream dataOutputStream, DataInputStream in) throws IOException {
         int id = 0;
         do {
@@ -207,13 +208,17 @@ public class Dispatcher
         }
     }
 
+    //compose a string to be sent to the user
     private String setMessageStr(Vector<Message> messages){
         String messagesStr = "#";
+
         if (messages != null) {
-            messagesStr += messages.get(0).toString() + "\n";
+            for(Message msg : messages)
+                messagesStr += msg.toString() + "\n";
         } else {
             messagesStr += "There are no relevant messages for you!\n";
         }
+
         return messagesStr;
     }
 
@@ -234,21 +239,13 @@ public class Dispatcher
                 intPullAns = Integer.parseInt(in.readUTF());
 
                 Vector<Message> messages = new Vector<>();
-                if (intPullAns == 1) {
+                if (intPullAns == 1) {//pull all the messages of the receiver
                     messages = DataManager.getInstance().getAllMessages(receiverId);
-                    String messagesStr = "#";
-                    if (messages != null) {
-                        for (Message msg : messages) {
-                            messagesStr += msg.toString() + "\n";
-                        }
-                    } else {
-                        messagesStr += "There are no relevant messages for you!\n";
-                    }
                     //send all the messages
-                    dataOutputStream.writeUTF( messagesStr + "\n\n");
+                    dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
 
-                } else if (intPullAns == 2) {
+                } else if (intPullAns == 2) {//pull specific message
                     dataOutputStream.writeUTF("Enter your message ID: ");
                     dataOutputStream.flush();
                     int messageId = Integer.parseInt(in.readUTF());
@@ -258,7 +255,7 @@ public class Dispatcher
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
 
-                } else if (intPullAns == 3) {
+                } else if (intPullAns == 3) {//pull al the messages with a specific sender ID
                     dataOutputStream.writeUTF("Enter the sender ID: ");
                     dataOutputStream.flush();
                     int senderId = Integer.parseInt(in.readUTF());
@@ -268,7 +265,7 @@ public class Dispatcher
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
 
-                } else if (intPullAns == 4) {
+                } else if (intPullAns == 4) {//pull all the messages with a specific subject
                     dataOutputStream.writeUTF("Enter the subject: ");
                     dataOutputStream.flush();
                     String subject = new String(in.readUTF());
@@ -278,7 +275,7 @@ public class Dispatcher
                     dataOutputStream.writeUTF( setMessageStr(messages) + "\n\n");
                     dataOutputStream.flush();
 
-                } else if (intPullAns != 5) {
+                } else if (intPullAns != 5) {//end the session
                     dataOutputStream.writeUTF( "#Wrong input, please try again: ");
                     dataOutputStream.flush();
                 }

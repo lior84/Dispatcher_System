@@ -21,16 +21,6 @@ public class Message {
         this.messageId = nextId++;
     }
 
-    public Message(Message other) {
-        this.subject = other.subject;
-        this.description = other.description;
-        this.parameters = other.parameters;
-        this.senderId = other.senderId;
-        this.receiverId = other.receiverId;
-        this.receivingTime = other.receivingTime;
-        this.messageId = other.messageId;
-    }
-
     public String getSubject() {
         return subject;
     }
