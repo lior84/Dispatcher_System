@@ -8,9 +8,8 @@ public class Message {
     private int senderId;
     private int receiverId;
     private int messageId;
-    private static int nextId = 0;
     private LocalDateTime receivingTime;
-
+    private static int nextId = 0;
 
     public Message(String subject, String description, HashMap<String, String> parameters, int senderId, int receiverId) {
         this.subject = subject;
@@ -30,10 +29,6 @@ public class Message {
         this.receiverId = other.receiverId;
         this.receivingTime = other.receivingTime;
         this.messageId = other.messageId;
-    }
-
-    public static int getNextId() {
-        return nextId;
     }
 
     public String getSubject() {
@@ -58,21 +53,6 @@ public class Message {
 
     public LocalDateTime getReceivingTime() {
         return receivingTime;
-    }
-
-    public static void main(String [] args){
-        HashMap<String, String> params = new HashMap<String, String>();
-        params.put("1", "a");
-        params.put("2", "b");
-        Message msg = new Message("Mail", "my mail", params, 84, 58);
-
-        HashMap<String, String> params1 = new HashMap<String, String>();
-        params.put("1", "a");
-        params.put("2", "b");
-        Message msg1 = new Message("Mail", "my mail", params, 84, 58);
-
-        System.out.println(Message.getNextId());
-
     }
 
     @Override
